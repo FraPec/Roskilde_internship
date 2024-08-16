@@ -23,7 +23,7 @@ params = pot_params + cut
 pair_pot = rp.PairPotential(pair_func, params, max_num_nbs=1000)
 
 # Setup integrator: NVE
-dt = 0.005
+dt = 0.002
 integrator = rp.integrators.NVE(dt=dt)
 
 # Setup Simulation.
@@ -39,30 +39,37 @@ sim = rp.Simulation(configuration, pair_pot, integrator,
                     scalar_output=scalar_output)
 
 # Saving starting configuration to see if it's an FCC 
-rp.tools.save_configuration(configuration, "initial.xyz")
+# rp.tools.save_configuration(configuration, "initial.xyz")
 
 # Run simulation
 sim.run()
 
 # Saving final configuration to see if it's an FCC 
-rp.tools.save_configuration(configuration, "final.xyz")
+# rp.tools.save_configuration(configuration, "final.xyz")
 
 # See if it's a correct NVE
 output = sim.output
 U, K = rp.extract_scalars(output, ['U', 'K'])
-t = np.arange(0, dt*(steps//scalar_output), dt)
+U = U[len(U)//4:]
+K = K[len(K)//4:]
+t = np.arange(0, dt*(len(U)), dt)
+mean_U = np.mean(U)
+mean_K = np.mean(K)
+rescaled_U = U / mean_U
+rescaled_K = K / mean_K
+E = U + K
+mean_E = np.mean(E)
+rescaled_E = E / mean_E
 
 plt.figure(1)
-plt.plot(t, U, label='U')
-plt.plot(t, K, label='K')
-plt.plot(t, K+U, label='Tot. Energy')
+plt.plot(t, rescaled_U, label='$U/U_{mean}$')
+plt.plot(t, rescaled_K, label='$K/K_{mean}$')
+plt.plot(t, rescaled_E, label='$E/E_{mean}$')
 plt.xticks(fontsize=25)
 plt.yticks(fontsize=25)
 plt.legend(fontsize=30)
-
-plt.legend()
 plt.grid()
-plt.xlabel('time', fontsize=35)
-plt.ylabel('U, W, Tot. Energy', fontsize=35)
+plt.xlabel('time [$\sigma \sqrt{m/ \epsilon}$]', fontsize=35)
+plt.ylabel('Rescaled energies', fontsize=35)
 plt.show()
 
