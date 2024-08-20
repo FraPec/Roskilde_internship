@@ -5,7 +5,6 @@ import matplotlib as mpl
 if __name__=='__main__':
     fname = 'data/widom_benchmark.txt'
     num_ghost_particles, mu_v, sigma_v, time_v = np.transpose(np.loadtxt(fname))
-
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=False)
     for ax in [ax1, ax2]:
         ax.xaxis.set_tick_params(labelsize=20)
@@ -26,6 +25,6 @@ if __name__=='__main__':
     ax2.grid()
     ax2.set_xlabel(r'num. ghost particles $\equiv n_{g}$', fontsize=30)
     ax2.set_ylabel(r'$\sigma / \mu_{ex}$', fontsize=25)
- 
+    
     plt.show()
  
