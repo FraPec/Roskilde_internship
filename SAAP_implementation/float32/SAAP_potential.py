@@ -128,7 +128,6 @@ if __name__ == '__main__':
     plt.yticks(fontsize=25)
     plt.legend(fontsize=30)
     plt.grid()
-    plt.show()
     
     # Plot the SAAP potential vs Lennard Jones potential
     plt.figure(2)
@@ -143,6 +142,37 @@ if __name__ == '__main__':
     plt.yticks(fontsize=25)
     plt.legend(fontsize=30)
     plt.grid()
+
+    # Plot of u(r) r^6, with real eps and sigma for Argon
+
+    sigma, eps = 0.3355134529, 143.4899372 
+    params = [65214.64725, -9.452343340, -19.42488828, 
+              -1.958381959, -2.379111084, 1.051490962, # normalized parameters for Argon SAAP
+              sigma, eps]
+    r = np.linspace(0, 1, 1000, dtype=np.float32)
+    u_r6 = np.array([saap(rr, params)[0] * rr**6 for rr in r])
+    plt.figure(3)
+    plt.ylim((-1, 4))
+    plt.xlim((0, 1))
+    plt.plot(r, u_r6, '-', label='u(r)')
+    plt.xlabel('r[m]', fontsize=35)
+    plt.xticks(fontsize=25)
+    plt.ylabel(r'$u(r) r^{6} 10^{54} [K m^6]$', fontsize=35)
+    plt.yticks(fontsize=25)
+    plt.legend(fontsize=30)
+    plt.grid()
+
+    plt.figure(4)
+    r = np.linspace(0.24, 0.88, 1000, dtype=np.float32)
+    u = np.array([saap(rr, params)[0] for rr in r])
+    plt.ylim((-300, 50))
+    plt.xlim((0.24, 0.88))
+    plt.plot(r, u, '-', label='Argon', color='black')
+    plt.xlabel('r[nm]', fontsize=20)
+    plt.xticks(fontsize=15)
+    plt.ylabel(r'$u(r)/k_{B} [K]$', fontsize=20)
+    plt.yticks(fontsize=15)
+    plt.legend(fontsize=20)
+    plt.grid()
     plt.show()
-    
     
