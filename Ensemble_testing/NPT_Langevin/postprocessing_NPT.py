@@ -3,7 +3,7 @@ import rumdpy as rp
 import matplotlib.pyplot as plt
 from numba import cuda
 
-cuda.select_device(0)
+cuda.select_device(1)
 # Simulation parameters
 dt = 0.004
 num_timeblocks = 3
@@ -16,16 +16,16 @@ scalar_output = 32
 P_target = 22.591
 
 # Target rho
-target_rho = 1.0/0.874908
+target_rho = 1.0/0.92612
 
 # Loading output from h5 file
-output = rp.tools.load_output('NPT2_solid.h5')
+output = rp.tools.load_output('NPT2_liquid.h5')
 
 nblocks, nconfs, _, N, D = output['block'].shape
 
 conf = rp.Configuration(D=D, N=N)
 
-conf.simbox = rp.Simbox(D, output['attrs']['simbox_initial'])
+conf.simbox = rp.Simbox(D, output.attrs['simbox_initial'])
 calc_rdf = rp.CalculatorRadialDistribution(conf, num_bins=1000)
 positions = output['block'][nblocks//2:,:,0,:,:]
 positions = positions.reshape(nblocks//2*nconfs, N, D)
@@ -64,7 +64,7 @@ plt.figure(1)
 plt.plot(t, T_kin)
 plt.grid()
 plt.axhline(np.mean(T_kin), label=f'mean temperature = {np.mean(T_kin):.2f} +- {np.std(T_kin):.2f}', color='black')
-plt.axhline(T_target, label=f'T reference = {T_target}', color='green')
+plt.axhline(T_target, label=f'Target temperature = {T_target}', color='green')
 plt.axhline(np.mean(T_kin) + np.std(T_kin), color='r')
 plt.axhline(np.mean(T_kin) - np.std(T_kin), color='r')
 plt.xlabel('time',  fontsize=35)

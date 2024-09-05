@@ -1,17 +1,19 @@
 import numpy as np
 import rumdpy as rp
 import matplotlib.pyplot as plt
+from numba import cuda
 
+cuda.select_device(0)
 # Simulation parameters
-dt = 0.004
-num_timeblocks = 1024
+dt = 0.002
+num_timeblocks = 64
 first_block = num_timeblocks // 3
 steps_per_timeblock = 4096
 steps = num_timeblocks * steps_per_timeblock
 scalar_output = 32
 
 # Loading output from h5 file
-output = rp.tools.load_output('NVT2_liquid.h5')
+output = rp.tools.load_output('NVT2_solid.h5')
 
 nblocks, nconfs, _, N, D = output['block'].shape
 
@@ -27,8 +29,11 @@ for pos in positions[nconfs-1::nconfs]:
     calc_rdf.update()
 calc_rdf.save_average()
 rdf = calc_rdf.read()
+cuda.close()
+
 plt.figure(0)
 rdf['rdf'] = np.mean(rdf['rdf'], axis=0)
+print(rdf['distances'][np.argmax(rdf['rdf'])])
 plt.plot(rdf['distances'], rdf['rdf'], '-')
 plt.xlabel('r [$\sigma$]', fontsize=35)
 plt.ylabel('g(r)', fontsize=35)
@@ -75,15 +80,15 @@ plt.figure(2)
 plt.plot(t, P)
 plt.grid()
 plt.axhline(np.mean(P), label=f'mean pressure = {np.mean(P):.1f} +- {np.std(P):.1f}', color='black')
-plt.axhline(P_target, label=f'Target pressure = {P_target}', color='green')
+plt.axhline(P_target, label=f'P reference = {P_target}', color='green')
 plt.axhline(np.mean(P) + np.std(P), color='r')
 plt.axhline(np.mean(P) - np.std(P), color='r')
 plt.xlabel('time', fontsize=35)
-plt.ylabel('P [$\epsilon \sigma^{3}$]', fontsize=35)
+plt.ylabel('P [$\epsilon \sigma^{-3}$]', fontsize=35)
 plt.xticks(fontsize=25)
 plt.yticks(fontsize=25)
 plt.legend(fontsize=25)
-plt.show(block=False)
+plt.show()
 
 # U per particle plot 
 u_target = -3.543498
@@ -91,7 +96,7 @@ plt.figure(2)
 plt.plot(t, U / N)
 plt.grid()
 plt.axhline(np.mean(U)/N, label=f'mean U per particle = {np.mean(U/N):.1f} +- {np.std(U/N):.1f}', color='black')
-plt.axhline(u_target, label=f'Target u = {u_target:.1f}', color='green')
+plt.axhline(u_target, label=f'u reference = {u_target:.1f}', color='green')
 plt.axhline(np.mean(U/N) + np.std(U/N), color='r')
 plt.axhline(np.mean(U/N) - np.std(U/N), color='r')
 plt.xlabel('time', fontsize=35)
@@ -99,7 +104,7 @@ plt.ylabel('u [$\epsilon $]', fontsize=35)
 plt.xticks(fontsize=25)
 plt.yticks(fontsize=25)
 plt.legend(fontsize=25)
-plt.show(Block=False)
+plt.show()
 
 print(f"Mean pressure: {np.mean(P):.1f} +- {np.std(P):.1f}")
 print(f"Mean kinetic temperature: {np.mean(T_kin):.2f}+- {np.std(T_kin):.2f}")
