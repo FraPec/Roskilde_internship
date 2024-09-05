@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 
 if __name__=='__main__':
-    fname = 'TI_crytical.txt'
+    fname = 'data/thermodyn_int.txt'
     T = 2.0
     m = 1.0
     rho_v, P_v, mu_ex_v, sigma_v, V_v = np.transpose(np.loadtxt(fname))
@@ -17,17 +16,21 @@ if __name__=='__main__':
     G_v = N * (mu_ex_v + mu_ideal_v) 
     # Helmholtz free energy
     F_v = G_v - P_v * V_v
-    V_der_v = np.gradient(G_v, P_v) # Derivative of G at constant T is V
+    V_der_v_widom = np.gradient(G_v, P_v) # Derivative of G at constant T is V
     F_int_v = np.zeros(F_v.shape)
     for i in range(len(P_v)): # Thermodynamic integration to obtain F
         F_int_v[i] = np.trapz(-P_v[:i+1], V_v[:i+1])
-    
+
+    # Let's define a G obtained from the thermodynamic integration
+    G_int_v = F_int_v + P_v * V_v
+    constant = G_v[0] - G_int_v[0] # It's an integration, so we have an unknown constants that we estimate from Widom's insertion first point
+    G_int_v = G_int_v + constant
 
     ### Plot of Volumes against pressures
     plt.figure()
     plt.title('$V/N \ vs\ P$, T = 2.0', fontsize=35)
-    plt.plot(P_v, V_v/N, label=r'v, NVT simulation')
-    plt.scatter(P_v, V_der_v/N, label=r"$\frac{1}{N} \frac{\partial G}{\partial P} \|_{T} = v$, Widoms's insertion", color='orange', marker='x')
+    plt.plot(P_v, V_v/N, label=r'v, NVT simulation', zorder=0)
+    plt.scatter(P_v, V_der_v_widom/N, label=r"$\frac{1}{N} \frac{\partial G}{\partial P} \|_{T} = v$, Widoms's insertion", color='orange', marker='x', zorder=2)
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
     plt.grid()
@@ -35,15 +38,15 @@ if __name__=='__main__':
     plt.ylabel(r'v $\equiv \ V/N$ [$\sigma^3$]', fontsize=35)
     plt.legend(fontsize=25)
     
-    # Let's define a G obtained from the thermodynamic integration
-    G_int_v = F_int_v + P_v * V_v
-    constant = np.mean(G_v - G_int_v) # It's an integration, so we have an unknown constants
-    G_int_v = G_int_v + constant 
     
+    
+    tosave = np.array([P_v, G_int_v / N])
+    np.savetxt('G_liquid.txt', tosave)
+
     ### Plot of mu (G per particle) against pressures
     plt.figure()
     plt.title('Widom $vs$ thermod. int., T = 2.0', fontsize=35)
-    plt.scatter(P_v, mu_tot_v, label=r"$\mu_{tot}$ Widom's insertion")
+    plt.errorbar(P_v, mu_tot_v, yerr=sigma_v, label=r"$\mu_{tot}$ Widom's insertion", linestyle=' ', marker='.')
     plt.scatter(P_v, G_int_v/N, label=r'$\mu_{tot}$ thermodynamic integration for F', color='orange', marker='x')
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
@@ -55,9 +58,9 @@ if __name__=='__main__':
     ### Plot of excess potential
     plt.figure()
     plt.title('Chemical potentials, T = 2.0', fontsize=35)
-    plt.plot(P_v, mu_ex_v, label=r"$\mu_{excess}$")
-    plt.plot(P_v, mu_ideal_v, label=r"$\mu_{ideal}$")
-    plt.plot(P_v, mu_tot_v, label=r"$\mu_{tot}$")
+    plt.scatter(P_v, mu_ex_v, label=r"$\mu_{excess}$")
+    plt.scatter(P_v, mu_ideal_v, label=r"$\mu_{ideal}$")
+    plt.scatter(P_v, mu_tot_v, label=r"$\mu_{tot}$")
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
     plt.grid()
@@ -65,13 +68,19 @@ if __name__=='__main__':
     plt.ylabel(r'$\mu [\epsilon]$', fontsize=35)
     plt.legend(fontsize=25)
 
-    ### Plot of sigma esteemed from blocks
-    plt.figure()
-    plt.title('Standard deviation on $\mu_{ex}$, T = 2.0', fontsize=35)
-    plt.scatter(rho_v, sigma_v/np.abs(mu_ex_v))
-    plt.xticks(fontsize=25)
-    plt.yticks(fontsize=25)
-    plt.grid()
-    plt.xlabel(r'$\rho$[$\sigma^{-3}$]', fontsize=35)
-    plt.ylabel(r'$\sigma_{\mu}/\mu_{ex}$', fontsize=35)
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    for ax in [ax1, ax2]:
+        ax.xaxis.set_tick_params(labelsize=20)
+        ax.yaxis.set_tick_params(labelsize=20)
+    fig.suptitle(r'$\sigma_{\mu_{ex}}$ and $\mu_{ex}$ vs $\rho$, $T=2.0$', fontsize=30)
+    ### Plot of sigma against rho
+    ax2.scatter(rho_v, sigma_v, label=r"{\sigma}", marker='.')
+    ax2.grid()
+    ax2.set_ylabel(r'$\sigma [\epsilon]$', fontsize=25)
+    ### Plot of sigma against rho
+    ax1.errorbar(rho_v, mu_ex_v, label=r"{\mu_{ex}}", yerr=sigma_v, linestyle=' ', marker='.')
+    ax1.grid()
+    ax1.set_ylabel(r'$\mu_{ex} [\epsilon]$', fontsize=25)
+    ax2.set_xlabel(r'$\rho [\sigma^{-3}]$', fontsize=25)
+
     plt.show()

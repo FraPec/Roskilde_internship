@@ -15,7 +15,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import numba
 
-
 def saap(dist, params):
     '''
     The SAAP potential: u(r) = eps (a0 exp(a1 r)/r + a2 exp(a3 r) + a4) / (1 + a5 r⁶)
